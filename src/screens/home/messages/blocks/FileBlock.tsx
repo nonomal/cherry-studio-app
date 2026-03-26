@@ -1,14 +1,14 @@
 import React, { memo } from 'react'
 
-import { FileMessageBlock } from '@/types/message'
 import { FileItem } from '@/componentsV2'
+import type { FileMessageBlock } from '@/types/message'
 
 interface Props {
   block: FileMessageBlock
 }
 
 const FileBlock: React.FC<Props> = ({ block }) => {
-  return <FileItem file={block.file} />
+  return <FileItem file={block.file} size={70} />
 }
 
 export default memo(FileBlock)

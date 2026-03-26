@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
 
-import { useDialog } from '@/hooks/useDialog'
-import { ProgressUpdate, restore, RestoreStepId } from '@/services/BackupService'
+import { presentDialog } from '@/componentsV2'
+import type { RestoreStep } from '@/componentsV2/features/SettingsScreen/data/RestoreProgressModal'
+import { databaseMaintenance } from '@/database/DatabaseMaintenance'
+import { resetAppInitializationState, runAppDataMigrations } from '@/services/AppInitializationService'
+import type { ProgressUpdate, RestoreStepId, StepStatus } from '@/services/BackupService'
+import { restore } from '@/services/BackupService'
 import { loggerService } from '@/services/LoggerService'
-import { FileMetadata } from '@/types/file'
+import type { FileMetadata } from '@/types/file'
 import { uuid } from '@/utils'
-import { getFileType } from '@/utils/file'
-import { RestoreStep } from '@/componentsV2/features/SettingsScreen/RestoreProgressModal'
+import { getFileExtension, getFileType } from '@/utils/file'
 const logger = loggerService.withContext('useRestore')
 
 // 定义步骤配置类型
@@ -19,6 +22,14 @@ export interface StepConfig {
 
 // 预定义的步骤配置
 export const RESTORE_STEP_CONFIGS = {
+  CLEAR_DATA: {
+    id: 'clear_data' as RestoreStepId,
+    titleKey: 'settings.data.restore.steps.clear_data'
+  },
+  RECEIVE_FILE: {
+    id: 'receive_file' as RestoreStepId,
+    titleKey: 'settings.data.restore.steps.receive_file'
+  },
   RESTORE_SETTINGS: {
     id: 'restore_settings' as RestoreStepId,
     titleKey: 'settings.data.restore.steps.restore_settings'
@@ -35,6 +46,20 @@ export const DEFAULT_RESTORE_STEPS: StepConfig[] = [
   RESTORE_STEP_CONFIGS.RESTORE_MESSAGES
 ]
 
+// LAN 传输步骤组合（包含文件接收）
+export const LAN_RESTORE_STEPS: StepConfig[] = [
+  RESTORE_STEP_CONFIGS.RECEIVE_FILE,
+  RESTORE_STEP_CONFIGS.RESTORE_SETTINGS,
+  RESTORE_STEP_CONFIGS.RESTORE_MESSAGES
+]
+
+// LAN 传输步骤组合（包含清理和文件接收）
+export const LAN_RESTORE_STEPS_WITH_CLEAR: StepConfig[] = [
+  RESTORE_STEP_CONFIGS.CLEAR_DATA,
+  RESTORE_STEP_CONFIGS.RESTORE_SETTINGS,
+  RESTORE_STEP_CONFIGS.RESTORE_MESSAGES
+]
+
 const createStepsFromConfig = (stepConfigs: StepConfig[], t: (key: string) => string): RestoreStep[] => {
   return stepConfigs.map(config => ({
     id: config.id,
@@ -45,6 +70,7 @@ const createStepsFromConfig = (stepConfigs: StepConfig[], t: (key: string) => st
 
 export interface UseRestoreOptions {
   stepConfigs?: StepConfig[]
+  clearBeforeRestore?: boolean
   customRestoreFunction?: (
     file: Omit<FileMetadata, 'md5'>,
     onProgress: (update: ProgressUpdate) => void
@@ -54,9 +80,8 @@ export interface UseRestoreOptions {
 export function useRestore(options: UseRestoreOptions = {}) {
   const { t } = useTranslation()
   const dispatch = useDispatch()
-  const dialog = useDialog()
 
-  const { stepConfigs = DEFAULT_RESTORE_STEPS, customRestoreFunction = restore } = options
+  const { stepConfigs = DEFAULT_RESTORE_STEPS, clearBeforeRestore = false, customRestoreFunction = restore } = options
 
   const [isModalOpen, setModalOpen] = useState(false)
   const [restoreSteps, setRestoreSteps] = useState<RestoreStep[]>(createStepsFromConfig(stepConfigs, t))
@@ -66,8 +91,7 @@ export function useRestore(options: UseRestoreOptions = {}) {
     const isValid = file.name.includes('cherry-studio')
 
     if (!isValid) {
-      dialog.open({
-        type: 'error',
+      presentDialog('error', {
         title: t('error.backup.title'),
         content: t('error.backup.file_invalid')
       })
@@ -83,17 +107,21 @@ export function useRestore(options: UseRestoreOptions = {}) {
     size?: number
     mimeType?: string
     type?: string
-  }): Omit<FileMetadata, 'md5'> => ({
-    id: uuid(),
-    name: file.name,
-    origin_name: file.name,
-    path: file.uri,
-    size: file.size || 0,
-    ext: file.name.split('.').pop() || '',
-    type: getFileType(file.name.split('.').pop() || ''),
-    created_at: Date.now(),
-    count: 1
-  })
+  }): Omit<FileMetadata, 'md5'> => {
+    const ext = getFileExtension(file.name)
+
+    return {
+      id: uuid(),
+      name: file.name,
+      origin_name: file.name,
+      path: file.uri,
+      size: file.size || 0,
+      ext,
+      type: getFileType(ext),
+      created_at: Date.now(),
+      count: 1
+    }
+  }
 
   const handleProgressUpdate = (update: ProgressUpdate) => {
     logger.info('handleProgressUpdate called:', update.step, update.status)
@@ -121,17 +149,44 @@ export function useRestore(options: UseRestoreOptions = {}) {
     })
   }
 
-  const startRestore = async (file: { name: string; uri: string; size?: number; mimeType?: string }) => {
+  const startRestore = async (
+    file: { name: string; uri: string; size?: number; mimeType?: string },
+    skipModalSetup = false
+  ) => {
     if (!validateFile(file)) return
 
-    // 重置状态并打开模态框
-    setRestoreSteps(createStepsFromConfig(stepConfigs, t))
-    setOverallStatus('running')
-    setModalOpen(true)
+    // 重置状态并打开模态框（除非 skipModalSetup 为 true）
+    // 先显示 modal，然后在 setTimeout 中执行清理和恢复操作
+    if (!skipModalSetup) {
+      setRestoreSteps(createStepsFromConfig(stepConfigs, t))
+      setOverallStatus('running')
+      setModalOpen(true)
+    }
 
     // Use setTimeout to ensure the modal renders before starting the restore process
     setTimeout(async () => {
       try {
+        // 清除现有数据（如果启用）
+        // 流程：重置数据库 -> 运行 v1 seed -> 恢复备份数据 -> restore() 内部运行增量迁移
+        if (clearBeforeRestore) {
+          try {
+            updateStepStatus('clear_data', 'in_progress')
+            logger.info('Clearing existing data before restore...')
+            await databaseMaintenance.resetDatabase()
+            resetAppInitializationState()
+            // 运行迁移以初始化系统数据（v1 seed）
+            // restore() 会在恢复后根据备份版本运行增量迁移
+            await runAppDataMigrations()
+            logger.info('Existing data cleared successfully')
+            updateStepStatus('clear_data', 'completed')
+          } catch (error) {
+            logger.error('Failed to clear existing data:', error)
+            updateStepStatus('clear_data', 'error', String(error))
+            setOverallStatus('error')
+            return
+          }
+        }
+
         const fileObject = createFileObject(file)
         await customRestoreFunction(fileObject, handleProgressUpdate, dispatch)
         setOverallStatus('success')
@@ -142,11 +197,23 @@ export function useRestore(options: UseRestoreOptions = {}) {
     }, 400)
   }
 
+  const updateStepStatus = (stepId: RestoreStepId, status: StepStatus, error?: string) => {
+    setRestoreSteps(prevSteps => prevSteps.map(step => (step.id === stepId ? { ...step, status, error } : step)))
+  }
+
+  const openModal = () => {
+    setRestoreSteps(createStepsFromConfig(stepConfigs, t))
+    setOverallStatus('running')
+    setModalOpen(true)
+  }
+
   return {
     isModalOpen,
     restoreSteps,
     overallStatus,
     startRestore,
-    closeModal: () => setModalOpen(false)
+    closeModal: () => setModalOpen(false),
+    updateStepStatus,
+    openModal
   }
 }

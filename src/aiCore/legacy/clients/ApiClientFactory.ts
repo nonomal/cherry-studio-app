@@ -1,10 +1,10 @@
 import { loggerService } from '@/services/LoggerService'
-import { Provider } from '@/types/assistant'
+import type { Provider } from '@/types/assistant'
 
 import { AihubmixAPIClient } from './aihubmix/AihubmixAPIClient'
 import { AnthropicAPIClient } from './anthropic/AnthropicAPIClient'
-import { BaseApiClient } from './BaseApiClient'
-import { CherryinAPIClient } from './cherryin/CherryinAPIClient'
+import type { BaseApiClient } from './BaseApiClient'
+import { CherryinAPIClient } from './cherryai/CherryaiAPIClient'
 import { GeminiAPIClient } from './gemini/GeminiAPIClient'
 import { NewAPIClient } from './newapi/NewAPIClient'
 import { OpenAIAPIClient } from './openai/OpenAIApiClient'

@@ -2,8 +2,12 @@
   "translation": {
     "assistants": {
       "market": {
-        "add.success": "Add {{assistant_name}} Successful",
-        "button.chat": "Chat Now",
+        "add": {
+          "success": "Add {{assistant_name}} Successful"
+        },
+        "button": {
+          "chat": "Chat Now"
+        },
         "groups": {
           "all": "All",
           "business": "Business",
@@ -16,40 +20,63 @@
         "search_placeholder": "Search assistants...",
         "title": "Assistant Market"
       },
+      "multi_select": {
+        "action": "Multi-select",
+        "delete_confirm_message": "This will also delete all topics associated with these assistants. This action cannot be undone.",
+        "delete_confirm_title": "Delete {{count}} assistants?",
+        "delete_success": "Deleted {{count}} assistants",
+        "selected_count": "{{count}} selected"
+      },
       "name": "Assistant Name",
       "save": "Save Assistant",
-      "search.no_results": "No assistants found",
-      "settings.context": "Context",
-      "settings.max_tokens": "Enable Max Tokens Limit",
-      "settings.max_tokens_value": "Max Tokens Limits",
-      "settings.reasoning": "Reasoning Effort",
-      "settings.reasoning.auto": "Auto",
-      "settings.reasoning.high": "High",
-      "settings.reasoning.low": "Low",
-      "settings.reasoning.medium": "Medium",
-      "settings.reasoning.minimal": "Weinian",
-      "settings.reasoning.off": "Off",
-      "settings.stream_output": "Stream Output",
-      "settings.temperature": "Temperature",
-      "settings.tooluse": {
-        "empty": "Tool invocation method not set",
-        "function": "function call",
-        "prompt": "Prompt invocation",
-        "title": "Tool invocation method"
+      "search": {
+        "no_results": "No assistants found"
       },
-      "settings.top_p": "Top P",
+      "settings": {
+        "context": "Context",
+        "max_tokens": "Enable Max Tokens Limit",
+        "max_tokens_value": "Max Tokens Limits",
+        "max_tokens_warning": "Sets the maximum number of tokens for a single interaction, which affects the length of the returned result. Set according to the model's context limit, otherwise an error will occur.",
+        "reasoning": {
+          "auto": "Auto",
+          "default": "Default",
+          "high": "High",
+          "label": "Reasoning Effort",
+          "low": "Low",
+          "medium": "Medium",
+          "minimal": "Minimal",
+          "none": "None",
+          "off": "Off"
+        },
+        "stream_output": "Stream Output",
+        "temperature": "Temperature",
+        "tooluse": {
+          "empty": "Tool invocation method not set",
+          "function": "function call",
+          "prompt": "Prompt invocation",
+          "title": "Tool invocation method"
+        },
+        "top_p": "Top P",
+        "unlimited_context": "Enable Max Context Limit"
+      },
       "sort": {
         "alphabetical": "Alphabetical",
         "recent_add": "Recently Added",
         "recent_use": "Recently Used",
         "title": "Sort Assistants"
       },
-      "title": "Assistants",
-      "title.change": "Switch Assistant",
-      "title.create": "Create Assistant",
-      "title.edit": "Edit Assistant",
-      "title.mine": "My assistant",
-      "title.recent": "Recent Assistants"
+      "title": {
+        "change": "Switch Assistant",
+        "create": "Create Assistant",
+        "edit": "Edit Assistant",
+        "label": "Assistants",
+        "mine": "My assistant",
+        "recent": "Recent Assistants"
+      },
+      "topics": {
+        "count_one": "1 topic",
+        "count_other": "{{count}} topics"
+      }
     },
     "button": {
       "add": "Add",
@@ -79,8 +106,11 @@
         }
       },
       "citation": "+ {{count}} Sources",
-      "default.name": "Default",
+      "default": {
+        "name": "Default"
+      },
       "think": "Thinking for {{seconds}} seconds",
+      "think_done": "Thought deeply for {{seconds}} seconds",
       "think_expand": "Tap to read my mind",
       "title": "Welcome to Cherry Studio!",
       "topics": {
@@ -93,16 +123,20 @@
       "welcome": "I'm your AI assistant for producers. You can create assistants, manage models, and more."
     },
     "common": {
+      "add": "Add",
       "added": " Added",
       "camera": "Camera",
       "cancel": "Cancel",
+      "check": "Check",
       "cherry_studio": "Cherry Studio",
       "cherry_studio_description": "A Powerful AI assistant for producer",
       "clear_all": "Clear All",
       "close": "Close",
       "confirm": "Confirm",
+      "content_too_long": "Content too long to display",
       "copied": "Copied",
       "copy": "Copy Text",
+      "copy_latex": "Copy as LaTeX",
       "delete": "Delete",
       "delete_translation": "Delete Translation",
       "description": "Description",
@@ -125,39 +159,51 @@
       "ok": "OK",
       "older": "Older",
       "others": "Others",
+      "parameters": "Parameters",
       "photo": "Photo",
       "play": "Play",
       "preset": "Preset",
       "prompt": "Prompt",
       "regenerate": "Regenerate",
       "rename": "Rename",
+      "result": "Result",
       "save": "Save",
       "saved": "Saved",
       "search_placeholder": "Search...",
       "see_all": "See All",
-      "select_text": "Select Text",
+      "select_all": "Select All",
       "source": "Source",
-      "start": "Get Started with Cherry Studio App 🎉",
+      "start": "Get Started with Cherry Studio 🎉",
       "stop": "Stop",
       "this_week": "This Week",
       "today": "Today",
       "tool": "Tool",
       "translate": "Translate",
+      "type": "Type",
+      "url": "URL",
       "visit": "Visit",
       "websearch": "Web Search",
       "welcome": {
-        "message1": "Welcome to Cherry Studio",
-        "message2": "Start creating and explore endless possibilities!"
+        "message1": "Welcome to Cherry Studio 🎉",
+        "message2": "Start creating and enjoying"
       },
       "yesterday": "Yesterday"
     },
     "error": {
+      "ai_feature": {
+        "not_available": "AI feature is not available.",
+        "update_failed": "Failed to update AI feature. Please try again."
+      },
       "availableProviders": "Available Providers",
       "availableTools": "Available Tools",
       "backup": {
         "file_format": "Backup file format error",
         "file_invalid": "The backup file is invalid. You need to export it to a mobile device through Cherry Studio.",
         "title": "Backup failed"
+      },
+      "camera": {
+        "failed": "Failed to take photo. Please try again.",
+        "file_not_found": "Photo file not found."
       },
       "cause": "Cause",
       "chat": {
@@ -195,6 +241,10 @@
       "originalMessage": "Original Message",
       "parameter": "Parameter",
       "pause_placeholder": "Interrupted",
+      "permission": {
+        "camera_denied": "Camera permission denied. Please enable it in Settings.",
+        "media_library_denied": "Photo library permission denied. Please enable it in Settings."
+      },
       "prompt": "Prompt",
       "provider": "Provider",
       "providerId": "Provider ID",
@@ -219,6 +269,9 @@
       "toolName": "Tool Name",
       "translate_assistant_model_not_defined": "Translate assistant model is not configured. Please go to Settings > Default Assistant to configure the translation assistant model",
       "unknown": "Unknown error",
+      "upload": {
+        "failed": "Failed to upload file. Please try again."
+      },
       "usage": "Usage",
       "user_message_not_found": "Unable to locate the original user message",
       "value": "Value",
@@ -232,6 +285,8 @@
       "linkErrorTitle": "Link Opening Error"
     },
     "export": {
+      "already_exporting": "Export in progress",
+      "failed": "Export failed",
       "image": "Export as image",
       "joplin": "Export to Joplin",
       "md": {
@@ -270,7 +325,12 @@
       "obsidian_title_required": "The title cannot be empty",
       "obsidian_vault": "Vault",
       "obsidian_vault_placeholder": "Please select the vault name",
+      "options": {
+        "include_reasoning": "Include reasoning chain",
+        "title": "Export Options"
+      },
       "siyuan": "Export to Siyuan Note",
+      "success": "Exported successfully",
       "title": "Export Message",
       "title_naming_failed": "Failed to generate title, using default title",
       "title_naming_success": "Title generated successfully",
@@ -279,15 +339,42 @@
       "yuque": "Export to Yuque"
     },
     "history": {
-      "search.placeholder": "Search topics or messages...",
-      "search.topics.empty": "No topics found, press Enter to search all messages",
-      "topics.empty": " No topics found"
+      "search": {
+        "placeholder": "Search topics or messages...",
+        "topics": {
+          "empty": "No topics found, press Enter to search all messages"
+        }
+      },
+      "topics": {
+        "empty": " No topics found"
+      }
+    },
+    "html_preview": {
+      "loading": "Loading HTML...",
+      "title": "HTML Preview"
     },
     "inputs": {
+      "longTextConverted": {
+        "message": "The pasted text ({{length}} characters) has been automatically converted to a file attachment",
+        "title": "Long Text Converted"
+      },
       "mentions": "@ {{number}} models",
       "placeholder": "Send Message..."
     },
     "mcp": {
+      "auth": {
+        "auth_required_content": "The MCP server \"{{name}}\" requires OAuth authorization. Connect now?",
+        "auth_required_title": "Authentication required",
+        "connect": "Connect",
+        "connected": "Connected",
+        "disconnect": "Disconnect",
+        "headers": "Custom Headers",
+        "invalid_json": "Invalid JSON",
+        "invalid_json_content": "Please enter valid JSON format for headers.",
+        "oauth": "OAuth",
+        "oauth_failed": "OAuth authentication failed",
+        "title": "Authentication"
+      },
       "builtin": {
         "calendar": {
           "description": "Get, operating system calendar"
@@ -298,22 +385,39 @@
         "reminder": {
           "description": "Get, create, update, and delete reminders"
         },
+        "shortcuts": {
+          "description": "Run iOS Shortcuts and get results"
+        },
         "time": {
           "description": "Get the current time"
         }
       },
       "market": {
+        "add": {
+          "success": "Added {{mcp_name}}"
+        },
         "title": "MCP Market"
       },
       "server": {
-        "empty": "No MCP servers available...",
+        "add": "Add MCP Server",
+        "delete": {
+          "content": "Are you sure you want to delete this MCP server? This action cannot be undone.",
+          "title": "Delete Server"
+        },
+        "description_placeholder": "Enter a description for this MCP server...",
+        "empty": {
+          "add": "Go to add MCP server",
+          "label": "No MCP servers available..."
+        },
+        "new": "New MCP Server",
         "selected": "{{num}} MCP servers selected",
-        "title": "MCP Server"
+        "title": "MCP Server",
+        "update_failed": "Failed to update {{name}}"
       },
       "type": {
         "inMemory": "built-in",
         "sse": "Server-Sent Events",
-        "streamableHttp": "Streaming HTTP"
+        "streamableHttp": "StreamableHTTP"
       }
     },
     "menu": {
@@ -335,8 +439,23 @@
       "delete_topic": "Delete Topic",
       "delete_topic_confirmation": "Are you sure you want to delete this topic?",
       "delete_translation": "Remove Translation",
+      "edit_failed": {
+        "content": "Failed to edit message. Please try again.",
+        "title": "Edit Failed"
+      },
+      "edit_reply": "Edit Reply",
+      "editing_message": "Editing",
       "marked_as_best_answer": "Marked as best answer",
+      "pause_failed": {
+        "content": "Failed to pause. Please try again.",
+        "title": "Pause Failed"
+      },
       "searching": "Searching...",
+      "send_failed": {
+        "content": "Failed to send message. Please try again.",
+        "title": "Send Failed"
+      },
+      "share_message": "Share news",
       "topic_deleted": "Topic deleted",
       "translate_message": "Translate Message",
       "unmarked_as_best_answer": "Unmarked as best answer",
@@ -377,7 +496,8 @@
       "baidu-cloud": "Baidu Cloud",
       "burncloud": "BurnCloud",
       "cephalon": "Cephalon",
-      "cherryin": "CherryIn",
+      "cherryai": "CherryAI",
+      "cherryin": "CherryIN",
       "copilot": "GitHub Copilot",
       "dashscope": "Alibaba Cloud",
       "deepseek": "DeepSeek",
@@ -460,18 +580,22 @@
           "description": "Assistant used for simple tasks such as topic naming and keyword extraction",
           "name": "Quick Assistant"
         },
+        "show": {
+          "icon": "Show model icon"
+        },
         "title": "Default Assistant",
         "translate_assistant": {
           "description": "Assistant used for translation service",
           "name": "Translation Assistant"
         }
       },
-      "assistant.show.icon": "Show model icon",
       "data": {
         "app_data": "App Data",
         "app_data_location": "App data location",
-        "app_knowledge": "Knowledge Base Files",
-        "app_knowledge.remove_all": "Remove Files",
+        "app_knowledge": {
+          "label": "Knowledge Base Files",
+          "remove_all": "Remove Files"
+        },
         "app_logs": "App Logs",
         "backup": "Data Backup",
         "basic_title": "Basic Data Settings",
@@ -482,38 +606,66 @@
           "warning": "Clearing the cache will erase all cached data, including cache files, images, and backups."
         },
         "cloud_backup": "Cloud Backup Settings",
-        "data.title": "Data Directory",
+        "data": {
+          "title": "Data Directory"
+        },
         "data_reset": {
           "error": "Data reset failed. Please try again or contact support if the problem persists."
         },
-        "landrop": {
-          "filename": "File Name",
-          "scan_qr_code": {
-            "description": "Scan QR Code from Cherry Studio",
-            "grant_permission": "Grant Permission",
-            "permission_denied": "Camera permission not granted. Please enable it in your device settings to scan QR codes.",
-            "requesting_permission": "Requesting camera permission...",
-            "success": "Connection Successful 🎉",
-            "success_description": "You can now Click Send Button to Restore Data!",
-            "title": "Scan QR Code"
-          },
-          "status": {
-            "connected": "Connected",
-            "connecting": "Connecting...",
-            "disconnected": "Disconnected",
-            "error": "Connection Error",
+        "lan_transfer": {
+          "app_version": "App Version",
+          "back_cancel_receive_body": "Going back will cancel the current transfer. Continue?",
+          "back_cancel_receive_title": "Leave this page?",
+          "backup_detected_body": "A backup file is ready. Restore now?",
+          "backup_detected_title": "Backup file detected",
+          "cancel_receive": "Cancel Receive",
+          "chunks": "chunks",
+          "connected": "Connected",
+          "device": "Device",
+          "device_name": "Device name",
+          "error": "Error",
+          "eta": "ETA",
+          "file_status": {
+            "cancelled": "Cancelled",
+            "cancelling": "Cancelling...",
+            "complete": "Complete",
+            "completing": "Completing...",
+            "error": "Error",
             "idle": "Idle",
-            "title": "Connection Status",
-            "zip_file_end": "File Transfer Completed",
-            "zip_file_start": "File Transfer Started"
+            "receiving": "Receiving",
+            "verifying": "Verifying..."
           },
-          "title": "Landrop"
+          "file_transfer": "File Transfer",
+          "hint": "Select this device in Cherry Studio desktop to send the backup",
+          "info": "Transfer Info",
+          "ip_address": "IP address",
+          "no_connection_warning": "Please open LAN Transfer in Cherry Studio desktop client",
+          "port": "Port",
+          "preparing": "Preparing...",
+          "receiving": "Receiving file...",
+          "restore_confirm": "Restore",
+          "restore_later": "Later",
+          "service": "Service",
+          "start_service": "Start receiving",
+          "status": "Status",
+          "stop_service": "Stop service",
+          "title": "LAN Transfer",
+          "transfer_cancelled_body": "File transfer has been cancelled",
+          "transfer_cancelled_title": "Transfer Cancelled",
+          "transfer_error": "LAN Transfer Error",
+          "unknown": "Unknown",
+          "waiting_connection": "Waiting for desktop to connect...",
+          "warning_content": "This will clear existing data and restore from desktop. Make sure important data is backed up.",
+          "warning_title": "Heads up",
+          "zeroconf_error": "Zeroconf Error"
         },
         "log_location": "Log file location",
         "reset": "Data Reset",
         "reset_success": "Data reset successful! The app has been restored to its initial state.",
         "reset_warning": "Are you sure you want to reset all data? This will delete all conversations, messages, and user-created content. This action cannot be undone.",
         "restore": {
+          "clear_error": "Failed to clear existing data. Please try again.",
+          "confirm_warning": "Restoring from backup will overwrite all current app data.",
           "error": "Restore Error",
           "error_message": "An error occurred during the restore process. Please check the file and try again.",
           "progress": {
@@ -525,6 +677,8 @@
             "success_description": "Restore Successful, Enjoy your time!"
           },
           "steps": {
+            "clear_data": "Clear existing data",
+            "receive_file": "Receive file",
             "restore_messages": "Restore messages",
             "restore_settings": "Restore configuration"
           },
@@ -535,14 +689,29 @@
       },
       "dataAndSecurity": "Data & Security",
       "general": {
-        "display.title": "Display Settings",
-        "language.title": "Language",
-        "privacy.anonymous": "Anonymous report errors and statistics",
-        "privacy.title": "Privacy Settings",
-        "theme.auto": "Auto",
-        "theme.dark": "Dark",
-        "theme.light": "Light",
-        "theme.title": "Theme",
+        "auto_scroll": {
+          "description": "Automatically scroll to the bottom when receiving streamed responses",
+          "title": "Auto-scroll Messages"
+        },
+        "developer_mode": {
+          "title": "Developer Mode"
+        },
+        "display": {
+          "title": "Display Settings"
+        },
+        "language": {
+          "title": "Language"
+        },
+        "privacy": {
+          "anonymous": "Anonymous report errors and statistics",
+          "title": "Privacy Settings"
+        },
+        "theme": {
+          "auto": "Auto",
+          "dark": "Dark",
+          "light": "Light",
+          "title": "Theme"
+        },
         "title": "General Settings"
       },
       "joplin": {
@@ -553,8 +722,10 @@
           "fail": "Joplin connection verification failed",
           "success": "Joplin connection verification successful"
         },
-        "export_reasoning.help": "When enabled, the exported content will include the reasoning chain (thought process) generated by the assistant.",
-        "export_reasoning.title": "Include Reasoning Chain in Export",
+        "export_reasoning": {
+          "help": "When enabled, the exported content will include the reasoning chain (thought process) generated by the assistant.",
+          "title": "Include Reasoning Chain in Export"
+        },
         "help": "Click here to get Joplin Authorization Token",
         "title": "Joplin Configuration",
         "token": "Joplin Authorization Token",
@@ -570,17 +741,33 @@
       },
       "modelAndService": "AI Models & Services",
       "models": {
-        "add.model": "Add Model",
-        "add.model.group": "Model Group",
-        "add.model.group.placeholder": "Optional e.g. OpenAI",
-        "add.model.id": "Model ID",
-        "add.model.id.placeholder": "Required e.g. gpt-4o",
-        "add.model.name": "Model Name",
-        "add.model.name.placeholder": "Optional e.g. GPT-4o",
+        "add": {
+          "model": {
+            "group": {
+              "label": "Model Group",
+              "placeholder": "Optional e.g. OpenAI"
+            },
+            "id": {
+              "label": "Model ID",
+              "placeholder": "Required e.g. gpt-4o"
+            },
+            "label": "Add Model",
+            "name": {
+              "label": "Model Name",
+              "placeholder": "Optional e.g. GPT-4o"
+            }
+          }
+        },
         "default_model": "Default Model",
-        "empty": "No Model yet...",
-        "empty.add_model": "Let's add your first model",
-        "empty.tooltip": "The page you were looking for is beyond our reach. Sorry for the inconvenience.",
+        "empty": {
+          "add_model": "Let's add your first model",
+          "label": "No Model yet...",
+          "tooltip": "The page you were looking for is beyond our reach. Sorry for the inconvenience."
+        },
+        "health_check": {
+          "checking": "Checking...",
+          "title": "Model Health Check"
+        },
         "search": "Search Models...",
         "title": "Models"
       },
@@ -597,8 +784,10 @@
         },
         "database_id": "Notion Database ID",
         "database_id_placeholder": "Enter Notion Database ID",
-        "export_reasoning.help": "When enabled, exported content will include reasoning chain (thought process).",
-        "export_reasoning.title": "Include Reasoning Chain in Export",
+        "export_reasoning": {
+          "help": "When enabled, exported content will include reasoning chain (thought process).",
+          "title": "Include Reasoning Chain in Export"
+        },
         "help": "Notion Configuration Documentation",
         "page_name_key": "Page Title Field Name",
         "page_name_key_placeholder": "Enter page title field name, default is Name",
@@ -631,22 +820,37 @@
         "title": "Personal Settings"
       },
       "provider": {
-        "add.name": "Provider Name",
-        "add.name.placeholder": "Required e.g. OpenAI",
-        "add.title": "Add Provider",
-        "add.type": "Provider Type",
+        "add": {
+          "name": {
+            "label": "Provider Name",
+            "placeholder": "Required e.g. OpenAI"
+          },
+          "title": "Add Provider",
+          "type": "Provider Type"
+        },
         "added": "Added",
-        "api.url.preview": "Preview: {{url}}",
-        "api.url.reset": "Reset",
-        "api.url.tip": "Ending with / ignores v1, ending with # forces use of input address",
-        "api_check.title": "Detection",
-        "api_check.tooltip": "Select the model to use for detection",
-        "api_host": "API Host",
-        "api_host.placeholder": "Please enter API host",
-        "api_key": "API Key",
-        "api_key.get": "Get API Key",
-        "api_key.placeholder": "Please enter API key",
-        "api_key.tip": "Multiple keys separated by commas",
+        "api": {
+          "url": {
+            "preview": "Preview: {{url}}",
+            "reset": "Reset",
+            "tip": "Ending with / ignores v1, ending with # forces use of input address"
+          }
+        },
+        "api_check": {
+          "confirm_message": "Start API check?",
+          "title": "Detection",
+          "tooltip": "Select the model to use for detection"
+        },
+        "api_host": {
+          "label": "API Host",
+          "placeholder": "Please enter API host"
+        },
+        "api_key": {
+          "get": "Get API Key",
+          "label": "API Key",
+          "placeholder": "Please enter API key",
+          "tip": "Multiple keys separated by commas"
+        },
         "api_service": "API Service",
         "auth": {
           "balance_recharge": "Balance Recharge",
@@ -660,20 +864,26 @@
           "model_empty": "Model cannot be empty.",
           "title": "Model check failed"
         },
-        "delete.content": "Are you sure you want to delete this provider?",
-        "delete.title": "Delete Provider",
+        "delete": {
+          "content": "Are you sure you want to delete this provider?",
+          "title": "Delete Provider"
+        },
         "edit": {
           "title": "Edit Provider"
         },
         "enabled": "On",
-        "list.title": "Provider List",
+        "list": {
+          "title": "Provider List"
+        },
         "not_found": "Provider not found",
         "not_found_message": "There is an error navigate to the provider page.",
         "provider_deleted": "Provider deleted",
         "search": "Search Providers...",
         "title": "Model Provider"
       },
-      "proxy.title": "Proxy Address",
+      "proxy": {
+        "title": "Proxy Address"
+      },
       "siyuan": {
         "api_url": "Siyuan Note API URL",
         "api_url_placeholder": "e.g.: http://127.0.0.1:6806",
@@ -690,19 +900,35 @@
         "root_path": "Siyuan Note Root Path",
         "root_path_placeholder": "e.g.: /CherryStudio",
         "title": "Siyuan Note Configuration",
-        "token": "Siyuan Note Token",
-        "token.help": "Get Siyuan Note Token",
+        "token": {
+          "help": "Get Siyuan Note Token",
+          "label": "Siyuan Note Token"
+        },
         "token_placeholder": "Please enter Siyuan Note Token"
       },
-      "theme.window.style.opaque": "Opaque Window",
-      "theme.window.style.title": "Window Style",
-      "theme.window.style.transparent": "Transparent Window",
+      "theme": {
+        "window": {
+          "style": {
+            "opaque": "Opaque Window",
+            "title": "Window Style",
+            "transparent": "Transparent Window"
+          }
+        }
+      },
       "title": "Settings",
-      "topic.position": "Topic position",
-      "topic.position.left": "Left",
-      "topic.position.right": "Right",
-      "topic.show.time": "Show topic time",
-      "tray.title": "Enable System Tray Icon",
+      "topic": {
+        "position": {
+          "label": "Topic position",
+          "left": "Left",
+          "right": "Right"
+        },
+        "show": {
+          "time": "Show topic time"
+        }
+      },
+      "tray": {
+        "title": "Enable System Tray Icon"
+      },
       "webdav": {
         "backup": {
           "auto_backup": "Auto Backup",
@@ -729,23 +955,32 @@
         "title": "WebDAV"
       },
       "websearch": {
-        "api_host": "API Host",
-        "api_host.placeholder": "Please enter API host",
-        "api_key": "API Key",
-        "api_key.get": "Get API Key",
-        "api_key.placeholder": "Please enter API key",
+        "api_host": {
+          "label": "API Host",
+          "placeholder": "Please enter API host"
+        },
+        "api_key": {
+          "get": "Get API Key",
+          "label": "API Key",
+          "placeholder": "Please enter API key"
+        },
         "api_service": "API Service",
-        "blacklist.title": "Blacklist",
+        "blacklist": {
+          "title": "Blacklist"
+        },
         "blacklist_description": "Results from the following websites will not appear in search results",
         "blacklist_placeholder": "Please use the following format (separated by newlines)\nPattern matching: *://*.example.com/*\nRegular expression: /example\\.(net|org)/",
         "builtin": "Built-in web search",
+        "change_provider": "Switch web search provider",
         "check_error": "Check Error",
         "check_fail": "Check Fail",
         "check_success": "Check Success",
         "check_success_message": "The API is working properly",
         "contentLengthLimit": "Content Length Limit",
-        "empty": "No Provider yet...",
-        "empty.description": "Go to Add Provider",
+        "empty": {
+          "description": "Go to Add Provider",
+          "label": "No Provider yet..."
+        },
         "overrideSearchService": "Override search service",
         "provider": {
           "api": {
@@ -756,10 +991,22 @@
           },
           "title": "Web Search Provider"
         },
+        "providers": {
+          "bocha": "Bocha",
+          "builtin": "Built-in",
+          "exa": "Exa",
+          "local-baidu": "Baidu",
+          "local-bing": "Bing",
+          "local-google": "Google",
+          "searxng": "Searxng",
+          "tavily": "Tavily"
+        },
         "searchCount": "Search Count",
         "searchWithDates": "Search with dates included",
         "selectPlaceholder": "Please Select Web Search Provider...",
-        "subscribe.title": "Blacklist Subscription",
+        "subscribe": {
+          "title": "Blacklist Subscription"
+        },
         "title": "Web Search"
       },
       "yuque": {
@@ -779,13 +1026,36 @@
       }
     },
     "topics": {
+      "multi_select": {
+        "action": "Multi-select",
+        "delete_confirm_message": "This action cannot be undone.",
+        "delete_confirm_title": "Delete {{count}} topics?",
+        "delete_success": "Deleted {{count}} topics",
+        "selected_count": "{{count}} selected"
+      },
       "new_topic": "New Topic",
       "rename": {
         "title": "Rename Topic"
       },
       "select_assistant": "Select New Assistant",
-      "title": "Topic",
-      "title.recent": "Recent Topics"
+      "title": {
+        "label": "Topic",
+        "recent": "Recent Topics"
+      }
+    },
+    "update": {
+      "description": "A new version is available. Would you like to update now?",
+      "ignore": "Don't remind again",
+      "now": "Update Now",
+      "title": "Update Available"
+    },
+    "voice": {
+      "error": "Speech recognition error",
+      "not_available": "Speech recognition is not available",
+      "permission_denied": "Microphone permission denied",
+      "permission_denied_message": "Please allow Cherry Studio to access your microphone in Settings",
+      "start": "Start voice input",
+      "stop": "Stop voice input"
     }
   }
 }

@@ -1,20 +1,27 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable } from 'react-native'
+import FastSquircleView from 'react-native-fast-squircle'
+
 import { Image, Text, YStack } from '@/componentsV2'
 
 const WelcomeContent = () => {
   const { t } = useTranslation()
 
   return (
-    <Pressable className="flex-1 justify-center items-center h-full w-full" onPress={() => Keyboard.dismiss()}>
-      <YStack className="justify-center items-center">
-        <Image
-          source={require('@/assets/images/favicon.png')}
-          className="w-[100px] h-[100px] rounded-lg overflow-hidden"
-          resizeMode="contain"
-        />
-        <Text className="text-[18px] font-bold text-primary mt-5">{t('chat.title')}</Text>
+    <Pressable className="h-full w-full flex-1 items-center justify-center" onPress={() => Keyboard.dismiss()}>
+      <YStack className="items-center justify-center">
+        <FastSquircleView
+          style={{
+            width: 144,
+            height: 144,
+            borderRadius: 35,
+            overflow: 'hidden'
+          }}
+          cornerSmoothing={0.6}>
+          <Image className="h-full w-full" source={require('@/assets/images/favicon.png')} />
+        </FastSquircleView>
+        <Text className="mt-5 text-xl font-bold">{t('chat.title')}</Text>
       </YStack>
     </Pressable>
   )

@@ -1,37 +1,34 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import type { PayloadAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit'
 
-import { WebSearchStatus } from '@/types/websearch'
-
-export interface WebSearchState {
-  activeSearches: Record<string, WebSearchStatus>
-}
+import type { Message } from '@/types/message'
 
 export interface RuntimeState {
-  websearch: WebSearchState
+  htmlPreviewContent: string | null
+  htmlPreviewSizeBytes: number
+  editingMessage: Message | null
 }
 
 const initialState: RuntimeState = {
-  websearch: {
-    activeSearches: {}
-  }
+  htmlPreviewContent: null,
+  htmlPreviewSizeBytes: 0,
+  editingMessage: null
 }
 
 const runtimeSlice = createSlice({
   name: 'runtime',
   initialState,
   reducers: {
-    setWebSearchStatus: (state, action: PayloadAction<{ requestId: string; status: WebSearchStatus }>) => {
-      const { requestId, status } = action.payload
-
-      if (status.phase === 'default') {
-        delete state.websearch.activeSearches[requestId]
-      }
-
-      state.websearch.activeSearches[requestId] = status
+    setHtmlPreviewContent(state, action: PayloadAction<{ content: string | null; sizeBytes: number }>) {
+      state.htmlPreviewContent = action.payload.content
+      state.htmlPreviewSizeBytes = action.payload.sizeBytes
+    },
+    setEditingMessage(state, action: PayloadAction<Message | null>) {
+      state.editingMessage = action.payload
     }
   }
 })
 
-export const { setWebSearchStatus } = runtimeSlice.actions
+export const { setHtmlPreviewContent, setEditingMessage } = runtimeSlice.actions
 
 export default runtimeSlice.reducer

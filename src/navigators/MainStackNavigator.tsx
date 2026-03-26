@@ -1,17 +1,18 @@
 import '@/i18n'
+import '../../global.css'
 
 import { createStackNavigator } from '@react-navigation/stack'
 import React from 'react'
 
+import { useAppState } from '@/hooks/useAppState'
 import AppDrawerNavigator from '@/navigators/AppDrawerNavigator'
 import WelcomeStackNavigator from '@/navigators/WelcomeStackNavigator'
-import { useAppSelector } from '@/store'
-import { RootStackParamList } from '@/types/naviagate'
+import type { RootStackParamList } from '@/types/naviagate'
 
 const Stack = createStackNavigator<RootStackParamList>()
 
 export default function MainStackNavigator() {
-  const welcomeShown = useAppSelector(state => state.app.welcomeShown)
+  const { welcomeShown } = useAppState()
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'none' }}>

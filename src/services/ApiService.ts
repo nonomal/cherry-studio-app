@@ -1,29 +1,30 @@
+import { messageDatabase } from '@database'
 import { t } from 'i18next'
 import { isEmpty, takeRight } from 'lodash'
 
 import LegacyAiProvider from '@/aiCore'
-
-import { CompletionsParams } from '@/aiCore/legacy/middleware/schemas'
-import { AiSdkMiddlewareConfig } from '@/aiCore/middleware/AiSdkMiddlewareBuilder'
-import { buildStreamTextParams, convertMessagesToSdkMessages } from '@/aiCore/prepareParams'
+import type { CompletionsParams } from '@/aiCore/legacy/middleware/schemas'
+import type { AiSdkMiddlewareConfig } from '@/aiCore/middleware/AiSdkMiddlewareBuilder'
+import { buildStreamTextParams } from '@/aiCore/prepareParams'
 import { isDedicatedImageGenerationModel, isEmbeddingModel } from '@/config/models'
 import i18n from '@/i18n'
 import { loggerService } from '@/services/LoggerService'
-import { Assistant, FetchChatCompletionParams, Model, Provider } from '@/types/assistant'
+import type { Assistant, FetchChatCompletionParams, Model, Provider } from '@/types/assistant'
 import { ChunkType } from '@/types/chunk'
-import { SdkModel } from '@/types/sdk'
-import { MCPTool } from '@/types/tool'
+import type { MCPServer } from '@/types/mcp'
+import type { SdkModel } from '@/types/sdk'
+import type { MCPTool } from '@/types/tool'
 import { isPromptToolUse, isSupportedToolUse } from '@/utils/mcpTool'
-import { filterMainTextMessages } from '@/utils/messageUtils/filters'
+import { findFileBlocks, getMainTextContent } from '@/utils/messageUtils/find'
+import { hasApiKey } from '@/utils/providerUtils'
 
 import AiProviderNew from '../aiCore/index_new'
-import { getDefaultModel } from './AssistantService'
+import { assistantService, getDefaultModel } from './AssistantService'
+import { mcpService } from './McpService'
 import { getAssistantProvider } from './ProviderService'
-import { createStreamProcessor, StreamProcessorCallbacks } from './StreamProcessingService'
-import { getActiveMcps } from './McpService'
-import { MCPServer } from '@/types/mcp'
-import { BUILTIN_TOOLS } from '@/config/mcp'
-import { assistantDatabase, messageDatabase, topicDatabase } from '@database'
+import type { StreamProcessorCallbacks } from './StreamProcessingService'
+import { createStreamProcessor } from './StreamProcessingService'
+import { topicService } from './TopicService'
 
 const logger = loggerService.withContext('fetchChatCompletion')
 
@@ -60,7 +61,8 @@ export async function fetchChatCompletion({
   const {
     params: aiSdkParams,
     modelId,
-    capabilities
+    capabilities,
+    webSearchPluginConfig
   } = await buildStreamTextParams(messages, assistant, provider, {
     mcpTools: mcpTools,
     webSearchProviderId: assistant.webSearchProviderId,
@@ -79,17 +81,24 @@ export async function fetchChatCompletion({
     enableGenerateImage: capabilities.enableGenerateImage,
     enableUrlContext: capabilities.enableUrlContext,
     mcpTools,
-    uiMessages
+    uiMessages,
+    webSearchPluginConfig
   }
 
   // --- Call AI Completions ---
-  await AI.completions(modelId, aiSdkParams, {
-    ...middlewareConfig,
-    assistant,
-    topicId,
-    callType: 'chat',
-    uiMessages
-  })
+  try {
+    await AI.completions(modelId, aiSdkParams, {
+      ...middlewareConfig,
+      assistant,
+      topicId,
+      callType: 'chat',
+      uiMessages
+    })
+  } catch (error) {
+    logger.error('fetchChatCompletion completions failed', error as Error)
+    onChunkReceived({ type: ChunkType.ERROR, error: error as any })
+    throw error
+  }
 }
 
 export async function fetchModels(provider: Provider): Promise<SdkModel[]> {
@@ -104,15 +113,8 @@ export async function fetchModels(provider: Provider): Promise<SdkModel[]> {
 }
 
 export function checkApiProvider(provider: Provider): void {
-  if (
-    provider.id !== 'ollama' &&
-    provider.id !== 'lmstudio' &&
-    provider.type !== 'vertexai' &&
-    provider.id !== 'copilot'
-  ) {
-    if (!provider.apiKey) {
-      throw new Error(i18n.t('message.error.enter.api.key'))
-    }
+  if (!hasApiKey(provider)) {
+    throw new Error(i18n.t('message.error.enter.api.key'))
   }
 
   if (!provider.apiHost && provider.type !== 'vertexai') {
@@ -159,12 +161,13 @@ export async function checkApi(provider: Provider, model: Model): Promise<void> 
     }
   } catch (error: any) {
     logger.error('Check Api Error', error)
+    throw error
   }
 }
 
 export async function fetchTopicNaming(topicId: string, regenerate: boolean = false) {
   logger.info('Fetching topic naming...')
-  const topic = await topicDatabase.getTopicById(topicId)
+  const topic = await topicService.getTopic(topicId)
   const messages = await messageDatabase.getMessagesByTopicId(topicId)
 
   if (!topic) {
@@ -180,38 +183,57 @@ export async function fetchTopicNaming(topicId: string, regenerate: boolean = fa
 
   callbacks = {
     onTextComplete: async finalText => {
-      await topicDatabase.upsertTopics([
-        {
-          ...topic,
-          name: finalText
-        }
-      ])
+      await topicService.updateTopic(topicId, { name: finalText.trim() })
     }
   }
   const streamProcessorCallbacks = createStreamProcessor(callbacks)
-  const quickAssistant = await assistantDatabase.getAssistantById('quick')
+  const quickAssistant = await assistantService.getAssistant('quick')
 
-  if (!quickAssistant.defaultModel) {
+  if (!quickAssistant) {
     return
   }
 
-  const provider = await getAssistantProvider(quickAssistant)
+  const quickAssistantModel = quickAssistant.defaultModel || getDefaultModel()
+  const assistantForProvider = quickAssistant.model ? quickAssistant : { ...quickAssistant, model: quickAssistantModel }
+  const assistantForRequest = quickAssistant.defaultModel
+    ? assistantForProvider
+    : { ...assistantForProvider, defaultModel: quickAssistantModel }
+  const provider = await getAssistantProvider(assistantForProvider)
 
   // 总结上下文总是取最后5条消息
   const contextMessages = takeRight(messages, 5)
 
   // LLM对多条消息的总结有问题，用单条结构化的消息表示会话内容会更好
-  const mainTextMessages = await filterMainTextMessages(contextMessages)
+  // 构建结构化消息对象（只保留文本和文件名，不传完整文件内容）
+  const structuredMessages = await Promise.all(
+    contextMessages.map(async message => {
+      const mainText = await getMainTextContent(message)
+      const fileBlocks = await findFileBlocks(message)
+      const fileList = fileBlocks.map(block => block.file.origin_name)
 
-  const llmMessages = await convertMessagesToSdkMessages(mainTextMessages, quickAssistant.defaultModel)
+      return {
+        role: message.role,
+        mainText,
+        files: fileList.length > 0 ? fileList : undefined
+      }
+    })
+  )
 
-  const AI = new AiProviderNew(quickAssistant.defaultModel || getDefaultModel(), provider)
-  const { params: aiSdkParams, modelId } = await buildStreamTextParams(llmMessages, quickAssistant, provider)
+  const conversation = JSON.stringify(structuredMessages)
+
+  const AI = new AiProviderNew(quickAssistantModel, provider)
+
+  // 使用 system + prompt 格式，而非多条消息格式
+  const aiSdkParams = {
+    system: quickAssistant.prompt,
+    prompt: conversation
+  }
+  const modelId = quickAssistantModel.id
 
   const middlewareConfig: AiSdkMiddlewareConfig = {
     streamOutput: false,
     onChunk: streamProcessorCallbacks,
-    model: quickAssistant.defaultModel,
+    model: quickAssistantModel,
     provider: provider,
     enableReasoning: false,
     isPromptToolUse: false,
@@ -228,36 +250,53 @@ export async function fetchTopicNaming(topicId: string, regenerate: boolean = fa
       (
         await AI.completions(modelId, aiSdkParams, {
           ...middlewareConfig,
-          assistant: quickAssistant,
+          assistant: assistantForRequest,
           topicId,
           callType: 'summary'
         })
-      ).getText() || ''
+      ).getText() || t('topics.new_topic')
     )
-  } catch (error: any) {
-    logger.error('Error during translation:', error)
+  } catch (error) {
+    logger.error('Error during topic naming:', error)
     return ''
   }
 }
 
+/**
+ * Fetch MCP tools for an assistant
+ *
+ * Refactored to use McpService for optimized caching and tool fetching.
+ *
+ * @param assistant - The assistant with MCP server configuration
+ * @returns Array of enabled MCP tools
+ */
 export async function fetchAssistantMcpTools(assistant: Assistant) {
   let mcpTools: MCPTool[] = []
-  const activedMcpServers = await getActiveMcps()
+
+  // Get all active MCP servers using McpService (with caching)
+  const activedMcpServers = await mcpService.getActiveMcpServers()
   const assistantMcpServers = assistant.mcpServers || []
 
+  // Filter to only MCP servers enabled for this assistant
   const enabledMCPs = activedMcpServers.filter(server => assistantMcpServers.some(s => s.id === server.id))
 
   if (enabledMCPs && enabledMCPs.length > 0) {
     try {
+      // Fetch tools for each enabled MCP server using McpService
+      // This automatically handles disabledTools filtering
       const toolPromises = enabledMCPs.map(async (mcpServer: MCPServer) => {
         try {
-          const tools = BUILTIN_TOOLS[mcpServer.id]
-          return tools.filter((tool: MCPTool) => !mcpServer.disabledTools?.includes(tool.name))
+          // Use McpService.getMcpTools() which handles:
+          // - Builtin tools fetching
+          // - Future MCP protocol integration
+          // - Automatic filtering of disabledTools
+          return await mcpService.getMcpTools(mcpServer.id)
         } catch (error) {
           logger.error(`Error fetching tools from MCP server ${mcpServer.name}:`, error as Error)
           return []
         }
       })
+
       const results = await Promise.allSettled(toolPromises)
       mcpTools = results
         .filter((result): result is PromiseFulfilledResult<MCPTool[]> => result.status === 'fulfilled')
@@ -267,5 +306,6 @@ export async function fetchAssistantMcpTools(assistant: Assistant) {
       logger.error('Error fetching MCP tools:', toolError as Error)
     }
   }
+
   return mcpTools
 }

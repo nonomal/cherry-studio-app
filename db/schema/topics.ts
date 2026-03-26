@@ -9,11 +9,9 @@ export const topics = sqliteTable(
     id: text('id').notNull().unique().primaryKey(),
     assistant_id: text('assistant_id')
       .notNull()
-      .references(() => assistants.id),
+      .references(() => assistants.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    pinned: integer('pinned', { mode: 'boolean' }),
-    prompt: text('prompt'),
-    is_name_manually_edited: integer('is_name_manually_edited', { mode: 'boolean' }),
+    isLoading: integer('isLoading', { mode: 'boolean' }),
     ...createUpdateTimestamps
   },
   table => [

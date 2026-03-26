@@ -1,4 +1,4 @@
-import { LanguageVarious } from '@/types'
+import type { LanguageVarious } from '@/types'
 
 export const languagesOptions: { value: LanguageVarious; label: string; flag: string }[] = [
   { value: 'zh-Hans-CN', label: '中文', flag: '🇨🇳' },
@@ -13,4 +13,4 @@ export const languagesOptions: { value: LanguageVarious; label: string; flag: st
   // { value: 'id-ID', label: 'Indonesia', flag: '🇮🇩' }
 ]
 
-export const defaultLanguage = 'zh-Hans-CN'
+export const defaultLanguage = 'en-US'

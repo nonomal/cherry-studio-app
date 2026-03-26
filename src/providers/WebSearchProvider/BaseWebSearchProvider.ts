@@ -1,5 +1,6 @@
-import { WebSearchState } from '@/store/websearch'
-import { WebSearchProvider, WebSearchProviderResponse } from '@/types/websearch'
+import type { FetchRequestInit } from 'expo/fetch'
+
+import type { WebSearchProvider, WebSearchProviderResponse, WebSearchState } from '@/types/websearch'
 
 export default abstract class BaseWebSearchProvider {
   protected provider: WebSearchProvider
@@ -16,7 +17,7 @@ export default abstract class BaseWebSearchProvider {
   abstract search(
     query: string,
     websearch: WebSearchState,
-    httpOptions?: RequestInit
+    httpOptions?: FetchRequestInit
   ): Promise<WebSearchProviderResponse>
 
   public defaultHeaders() {

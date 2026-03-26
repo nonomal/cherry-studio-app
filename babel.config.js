@@ -5,11 +5,9 @@ module.exports = function (api) {
       [
         'babel-preset-expo',
         {
-          'react-compiler': true,
-          jsxImportSource: 'nativewind'
+          'react-compiler': true
         }
-      ],
-      'nativewind/babel'
+      ]
     ],
     plugins: [
       ['inline-import', { extensions: ['.sql'] }],
@@ -18,9 +16,8 @@ module.exports = function (api) {
         'module-resolver',
         {
           alias: {
-            '@mcp-trace/trace-core': '../packages/mcp-trace/trace-core',
-            '@mcp-trace/trace-node': '../packages/mcp-trace/trace-node',
-            '@db': './db'
+            '@db': './db',
+            '@/modules': './modules'
           }
         }
       ],

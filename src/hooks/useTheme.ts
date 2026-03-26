@@ -1,15 +1,16 @@
 import { useColorScheme } from 'react-native'
-import { useSelector } from 'react-redux'
 
-import { RootState } from '@/store'
 import { ThemeMode } from '@/types'
+
+import { usePreference } from './usePreference'
 
 export function useTheme() {
   const systemColorScheme = useColorScheme()
-  const themeSetting = useSelector((state: RootState) => state.settings.theme)
+  const [themeSetting] = usePreference('ui.theme_mode')
 
   const settedTheme = themeSetting === ThemeMode.system ? systemColorScheme : themeSetting
   const activeTheme = settedTheme === ThemeMode.dark ? 'dark' : 'light'
+  const isDark = activeTheme === 'dark'
 
-  return { themeSetting, settedTheme, activeTheme }
+  return { themeSetting, settedTheme, activeTheme, isDark }
 }

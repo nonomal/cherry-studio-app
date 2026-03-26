@@ -1,10 +1,10 @@
 import React from 'react'
 
-import { MCPToolResponse } from '@/types/mcp'
-import { ToolMessageBlock } from '@/types/message'
+import type { MCPToolResponse } from '@/types/mcp'
+import type { ToolMessageBlock } from '@/types/message'
 
-import { MessageWebSearchToolTitle } from './MessageWebSearchTool'
 import MessageMcpTool from './MessageMcpTool'
+import { MessageWebSearchToolTitle } from './MessageWebSearchTool'
 // import { MessageKnowledgeSearchToolTitle } from './MessageKnowledgeSearchTool'
 
 interface Props {
@@ -39,7 +39,7 @@ export default function MessageTool({ block }: Props) {
 
   const toolRenderer = ChooseTool(toolResponse)
 
-  if (!toolRenderer) return <MessageMcpTool block={block}/>
+  if (!toolRenderer) return <MessageMcpTool block={block} />
 
   return toolRenderer.label
 }

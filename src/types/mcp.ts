@@ -1,6 +1,6 @@
-import z from 'zod'
+import * as z from 'zod'
 
-import { BaseTool, MCPTool } from './tool'
+import type { BaseTool, MCPTool } from './tool'
 
 export const MCPConfigSampleSchema = z.object({
   command: z.string(),
@@ -25,7 +25,6 @@ export const McpServerTypeSchema = z
     }
   })
   .pipe(z.union([z.literal('stdio'), z.literal('sse'), z.literal('streamableHttp'), z.literal('inMemory')])) // 大多数情况下默认使用 stdio
-
 
 /**
  * 定义单个 MCP 服务器的配置。
@@ -301,6 +300,12 @@ export interface MCPServer {
   shouldConfig?: boolean
   /** 用于标记服务器是否运行中 */
   isActive: boolean
+  /** 指示用户是否已信任该 MCP */
+  isTrusted?: boolean
+  /** 首次标记为信任的时间戳 */
+  trustedAt?: number
+  /** 安装时间戳 */
+  installedAt?: number
 }
 
 export type BuiltinMCPServer = MCPServer & {
@@ -315,7 +320,7 @@ export const isBuiltinMCPServer = (server: MCPServer): server is BuiltinMCPServe
 export const BuiltinMCPServerNames = {
   fetch: '@cherry/fetch',
   time: '@cherry/time',
-  calendar:'@cherry/calendar'
+  calendar: '@cherry/calendar'
 } as const
 
 export type BuiltinMCPServerName = (typeof BuiltinMCPServerNames)[keyof typeof BuiltinMCPServerNames]
@@ -433,4 +438,51 @@ export interface MCPResource {
   size?: number
   text?: string
   blob?: string
+}
+
+// ==================== MCP Client Error Types ====================
+
+/**
+ * Error codes for MCP connectivity checks
+ */
+export type ConnectivityErrorCode = 'NETWORK_ERROR' | 'AUTH_REQUIRED' | 'TIMEOUT' | 'SERVER_ERROR' | 'UNKNOWN'
+
+/**
+ * Result of checking MCP server connectivity
+ */
+export interface ConnectivityResult {
+  connected: boolean
+  error?: string
+  errorCode?: ConnectivityErrorCode
+}
+
+/**
+ * Error codes for OAuth trigger operations
+ */
+export type OAuthErrorCode =
+  | 'NO_URL'
+  | 'USER_CANCELLED'
+  | 'DISCOVERY_FAILED'
+  | 'REGISTRATION_FAILED'
+  | 'TOKEN_EXCHANGE_FAILED'
+  | 'STATE_MISMATCH'
+  | 'UNKNOWN'
+
+/**
+ * Result of triggering OAuth authentication
+ */
+export interface OAuthTriggerResult {
+  success: boolean
+  error?: string
+  errorCode?: OAuthErrorCode
+}
+
+/**
+ * Result of batch update operations
+ */
+export interface BatchUpdateResult<T> {
+  succeeded: T[]
+  failed: { item: T; error: string }[]
+  totalSucceeded: number
+  totalFailed: number
 }

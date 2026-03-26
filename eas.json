@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "PROFILE": "development"
+      },
       "android": {
         "buildType": "apk",
         "withoutCredentials": "true",
@@ -15,17 +18,13 @@
     },
     "preview": {
       "distribution": "internal",
-      "android": {
-        "buildType": "apk",
-        "env": {
-          "BUNDLE_ID": "com.cherry-ai.cherry-studio-app"
-        }
+      "env": {
+        "PROFILE": "preview"
       },
-      "ios": {
-        "env": {
-          "BUNDLE_ID": "com.cherry-ai.cherry-studio-app"
-        }
-      }
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {}
     },
     "production": {
       "autoIncrement": true,
@@ -41,6 +40,10 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "ascAppId": "6754246754"
+      }
+    }
   }
 }

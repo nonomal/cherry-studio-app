@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 
 import { loggerService } from '@/services/LoggerService'
-import { Provider } from '@/types/assistant'
+import type { Provider } from '@/types/assistant'
 
 import { db } from '..'
 import { transformDbToProvider, transformProviderToDb } from '../mappers'
@@ -25,13 +25,10 @@ export async function upsertProviders(providersToUpsert: Provider[]) {
     await db.transaction(async tx => {
       const updateFields = buildExcludedSet(dbRecords[0])
 
-      await tx
-        .insert(providers)
-        .values(dbRecords)
-        .onConflictDoUpdate({
-          target: providers.id,
-          set: updateFields
-        })
+      await tx.insert(providers).values(dbRecords).onConflictDoUpdate({
+        target: providers.id,
+        set: updateFields
+      })
     })
   } catch (error) {
     logger.error('Error in upsertProviders:', error)

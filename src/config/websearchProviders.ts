@@ -1,7 +1,12 @@
-import { WebSearchProvider } from '@/types/websearch'
+import type { WebSearchProvider } from '@/types/websearch'
 
 export function getWebSearchProviders(): WebSearchProvider[] {
   return [
+    {
+      id: 'builtin',
+      name: 'Built-in',
+      type: 'builtin'
+    },
     {
       id: 'tavily',
       name: 'Tavily',

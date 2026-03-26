@@ -1,9 +1,10 @@
-import { WebSearchResultBlock } from '@anthropic-ai/sdk/resources'
-import { GroundingMetadata } from '@google/genai'
+import type { WebSearchResultBlock } from '@anthropic-ai/sdk/resources'
+import type { GroundingMetadata } from '@google/genai'
 import type OpenAI from 'openai'
 
-import { CitationMessageBlock, Message } from '@/types/message'
-import { Citation, WebSearchProviderResponse, WebSearchSource } from '@/types/websearch'
+import type { CitationMessageBlock, Message } from '@/types/message'
+import type { Citation, WebSearchProviderResponse } from '@/types/websearch'
+import { WebSearchSource } from '@/types/websearch'
 
 import { findImageBlocks } from './messageUtils/find'
 
@@ -163,12 +164,16 @@ export const formatCitationsFromBlock = (block: CitationMessageBlock | undefined
       case WebSearchSource.GROK:
       case WebSearchSource.OPENROUTER:
         formattedCitations =
-          (block.response.results as any[])?.map((url, index) => {
+          (block.response.results as any[])?.map((result, index) => {
+            const url = typeof result === 'string' ? result : result.url
+            const title = typeof result === 'string' ? undefined : result.title
+
             try {
-              const hostname = new URL(url).hostname
+              const hostname = url ? new URL(url).hostname : undefined
               return {
                 number: index + 1,
-                url,
+                url: url,
+                title,
                 hostname,
                 showFavicon: true,
                 type: 'websearch'
@@ -176,7 +181,8 @@ export const formatCitationsFromBlock = (block: CitationMessageBlock | undefined
             } catch {
               return {
                 number: index + 1,
-                url,
+                url: url,
+                title,
                 hostname: url,
                 showFavicon: true,
                 type: 'websearch'

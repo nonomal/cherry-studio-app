@@ -1,155 +1,326 @@
-import { eq } from 'drizzle-orm'
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
-import { useMemo } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 
-import { RootState } from '@/store'
-import { resetBuiltInAssistants as _resetBuiltInAssistants } from '@/store/assistant'
-import { Assistant } from '@/types/assistant'
+import { assistantService } from '@/services/AssistantService'
+import { loggerService } from '@/services/LoggerService'
+import type { Assistant } from '@/types/assistant'
 
-import { transformDbToAssistant } from '@db/mappers'
-import { assistantDatabase } from '@database'
-import { assistants as assistantsSchema } from '@db/schema'
-import { db } from '@db'
+const logger = loggerService.withContext('useAssistant')
 
+/**
+ * React Hook for managing a specific assistant (Refactored with useSyncExternalStore)
+ *
+ * Uses AssistantService with optimistic updates for zero-latency UX.
+ * Integrates with React 18's useSyncExternalStore for efficient re-renders.
+ *
+ * @param assistantId - The assistant ID to watch
+ * @returns assistant data, loading state, and update method
+ *
+ * @example
+ * ```typescript
+ * function AssistantDetail({ assistantId }) {
+ *   const { assistant, isLoading, updateAssistant } = useAssistant(assistantId)
+ *
+ *   if (isLoading) return <Loading />
+ *
+ *   return (
+ *     <div>
+ *       <h1>{assistant.name}</h1>
+ *       <button onClick={() => updateAssistant({ name: 'New Name' })}>Rename</button>
+ *     </div>
+ *   )
+ * }
+ * ```
+ */
 export function useAssistant(assistantId: string) {
-  const query = db.select().from(assistantsSchema).where(eq(assistantsSchema.id, assistantId))
+  // ==================== Early Return for Invalid ID ====================
 
-  const { data: rawAssistant, updatedAt } = useLiveQuery(query, [assistantId])
+  const isValidId = assistantId && assistantId.trim() !== ''
 
-  const updateAssistant = async (assistant: Assistant) => {
-    await assistantDatabase.upsertAssistants([assistant])
-  }
+  // ==================== Subscription (useSyncExternalStore) ====================
 
-  const processedAssistant = useMemo(() => {
-    if (!rawAssistant || rawAssistant.length === 0) {
+  /**
+   * Subscribe to specific assistant changes
+   */
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (!isValidId) {
+        // Return a no-op unsubscribe for invalid IDs
+        return () => {}
+      }
+      logger.verbose(`Subscribing to assistant ${assistantId} changes`)
+      return assistantService.subscribeAssistant(assistantId, callback)
+    },
+    [assistantId, isValidId]
+  )
+
+  /**
+   * Get assistant snapshot (synchronous from cache)
+   */
+  const getSnapshot = useCallback(() => {
+    if (!isValidId) {
       return null
     }
-    return transformDbToAssistant(rawAssistant[0])
-  }, [rawAssistant])
+    return assistantService.getAssistantCached(assistantId)
+  }, [assistantId, isValidId])
 
-  if (!updatedAt) {
-    return {
-      assistant: null,
-      isLoading: true,
-      updateAssistant
-    }
-  }
+  /**
+   * Server snapshot (for SSR compatibility - not used in React Native)
+   */
+  const getServerSnapshot = useCallback(() => {
+    return null
+  }, [])
 
-  // Handle case where assistant was deleted
-  if (!processedAssistant) {
-    return {
-      assistant: null,
-      isLoading: false,
-      updateAssistant
+  // Use useSyncExternalStore for reactive updates
+  const assistant = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+
+  // ==================== Loading State ====================
+
+  /**
+   * Track if we're loading the assistant from database
+   */
+  const [isLoading, setIsLoading] = useState(false)
+
+  /**
+   * Load assistant from database if not cached
+   */
+  useEffect(() => {
+    // Skip loading for invalid IDs
+    if (!isValidId) {
+      setIsLoading(false)
+      return
     }
-  }
+
+    if (!assistant) {
+      setIsLoading(true)
+      assistantService
+        .getAssistant(assistantId)
+        .then(() => {
+          setIsLoading(false)
+        })
+        .catch(error => {
+          logger.error(`Failed to load assistant ${assistantId}:`, error as Error)
+          setIsLoading(false)
+        })
+    } else {
+      setIsLoading(false)
+    }
+  }, [assistant, assistantId, isValidId])
+
+  // ==================== Action Methods ====================
+
+  /**
+   * Update assistant with optimistic updates
+   */
+  const updateAssistant = useCallback(
+    async (updates: Partial<Omit<Assistant, 'id'>>) => {
+      await assistantService.updateAssistant(assistantId, updates)
+    },
+    [assistantId]
+  )
+
+  // ==================== Return API ====================
 
   return {
-    assistant: processedAssistant,
-    isLoading: false,
+    assistant,
+    isLoading: !assistant && isLoading,
     updateAssistant
   }
 }
 
+/**
+ * React Hook for getting all assistants
+ *
+ * Uses AssistantService with caching for optimal performance.
+ *
+ * @example
+ * ```typescript
+ * function AssistantList() {
+ *   const { assistants, isLoading } = useAssistants()
+ *
+ *   if (isLoading) return <Loading />
+ *
+ *   return (
+ *     <ul>
+ *       {assistants.map(a => <li key={a.id}>{a.name}</li>)}
+ *     </ul>
+ *   )
+ * }
+ * ```
+ */
 export function useAssistants() {
-  const query = db.select().from(assistantsSchema)
+  const [assistants, setAssistants] = useState<Assistant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const { data: rawAssistants, updatedAt } = useLiveQuery(query)
+  /**
+   * Subscribe to changes
+   */
+  const subscribe = useCallback((callback: () => void) => {
+    logger.verbose('Subscribing to all assistants changes')
+    return assistantService.subscribeAllAssistants(callback)
+  }, [])
 
-  const updateAssistants = async (assistants: Assistant[]) => {
-    await assistantDatabase.upsertAssistants(assistants)
-  }
+  useEffect(() => {
+    const unsubscribe = subscribe(() => {
+      // Reload when any assistant changes
+      loadAllAssistants()
+    })
 
-  const processedAssistants = useMemo(() => {
-    if (!rawAssistants) return []
-    return rawAssistants.map(provider => transformDbToAssistant(provider))
-  }, [rawAssistants])
+    loadAllAssistants()
 
-  if (!updatedAt) {
-    return {
-      assistants: [],
-      isLoading: true,
-      updateAssistants
+    return unsubscribe
+  }, [subscribe])
+
+  const loadAllAssistants = async () => {
+    try {
+      setIsLoading(true)
+      const allAssistants = await assistantService.getAllAssistants()
+      setAssistants(allAssistants)
+    } catch (error) {
+      logger.error('Failed to load all assistants:', error as Error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
+  const updateAssistants = useCallback(async (updates: Assistant[]) => {
+    for (const assistant of updates) {
+      await assistantService.updateAssistant(assistant.id, assistant)
+    }
+  }, [])
+
   return {
-    assistants: processedAssistants,
-    isLoading: false,
+    assistants,
+    isLoading,
     updateAssistants
   }
 }
 
+/**
+ * React Hook for getting external assistants (user-created)
+ *
+ * @example
+ * ```typescript
+ * function ExternalAssistantList() {
+ *   const { assistants, isLoading } = useExternalAssistants()
+ *
+ *   return <AssistantList assistants={assistants} loading={isLoading} />
+ * }
+ * ```
+ */
 export function useExternalAssistants() {
-  // bug: https://github.com/drizzle-team/drizzle-orm/issues/2660
-  // const query = db.query.assistants.findMany({
-  //   where: eq(assistantsSchema.isStar, true),
-  //   with: {
-  //     topics: true
-  //   }
-  // })
+  const [assistants, setAssistants] = useState<Assistant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const query = db.select().from(assistantsSchema).where(eq(assistantsSchema.type, 'external'))
-  const { data: rawAssistants, updatedAt } = useLiveQuery(query)
+  /**
+   * Subscribe to changes
+   */
+  const subscribe = useCallback((callback: () => void) => {
+    return assistantService.subscribeAllAssistants(callback)
+  }, [])
 
-  const updateAssistants = async (assistants: Assistant[]) => {
-    await assistantDatabase.upsertAssistants(assistants)
-  }
+  useEffect(() => {
+    const unsubscribe = subscribe(() => {
+      // Reload when any assistant changes
+      loadExternalAssistants()
+    })
 
-  const processedAssistants = useMemo(() => {
-    if (!rawAssistants) return []
-    return rawAssistants.map(provider => transformDbToAssistant(provider))
-  }, [rawAssistants])
+    loadExternalAssistants()
 
-  if (!updatedAt) {
-    return {
-      assistants: [],
-      isLoading: true,
-      updateAssistants
+    return unsubscribe
+  }, [subscribe])
+
+  const loadExternalAssistants = async () => {
+    try {
+      setIsLoading(true)
+      const external = await assistantService.getExternalAssistants()
+      setAssistants(external)
+    } catch (error) {
+      logger.error('Failed to load external assistants:', error as Error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
+  const updateAssistants = useCallback(async (updates: Assistant[]) => {
+    for (const assistant of updates) {
+      await assistantService.updateAssistant(assistant.id, assistant)
+    }
+  }, [])
+
   return {
-    assistants: processedAssistants,
-    isLoading: false,
+    assistants,
+    isLoading,
     updateAssistants
   }
 }
 
+/**
+ * React Hook for getting built-in assistants
+ *
+ * @example
+ * ```typescript
+ * function BuiltInAssistantList() {
+ *   const { assistants, isLoading, resetBuiltInAssistants } = useBuiltInAssistants()
+ *
+ *   if (isLoading) return <Loading />
+ *
+ *   return (
+ *     <div>
+ *       {assistants.map(a => <AssistantCard key={a.id} assistant={a} />)}
+ *       <button onClick={resetBuiltInAssistants}>Reset to Default</button>
+ *     </div>
+ *   )
+ * }
+ * ```
+ */
 export function useBuiltInAssistants() {
-  const dispatch = useDispatch()
+  const [assistants, setAssistants] = useState<Assistant[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const builtInAssistants = useSelector((state: RootState) => state.assistant.builtInAssistants)
+  /**
+   * Subscribe to changes
+   */
+  const subscribe = useCallback((callback: () => void) => {
+    return assistantService.subscribeBuiltInAssistants(callback)
+  }, [])
 
-  const resetBuiltInAssistants = () => {
-    dispatch(_resetBuiltInAssistants())
+  useEffect(() => {
+    const unsubscribe = subscribe(() => {
+      // Reload when any built-in assistant changes
+      loadBuiltInAssistants()
+    })
+
+    loadBuiltInAssistants()
+
+    return unsubscribe
+  }, [subscribe])
+
+  const loadBuiltInAssistants = async () => {
+    try {
+      setIsLoading(true)
+      const builtIn = await assistantService.getBuiltInAssistants()
+      setAssistants(builtIn)
+    } catch (error) {
+      logger.error('Failed to load built-in assistants:', error as Error)
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+  const resetBuiltInAssistants = useCallback(() => {
+    assistantService.resetBuiltInAssistants()
+  }, [])
+
+  const updateAssistants = useCallback(async (updates: Assistant[]) => {
+    for (const assistant of updates) {
+      await assistantService.updateAssistant(assistant.id, assistant)
+    }
+  }, [])
 
   return {
-    builtInAssistants,
-    resetBuiltInAssistants
+    assistants,
+    isLoading,
+    resetBuiltInAssistants,
+    updateAssistants
   }
-  // const query = db.select().from(assistantsSchema).where(eq(assistantsSchema.type, 'built_in'))
-  // const { data: rawAssistants, updatedAt } = useLiveQuery(query)
-
-  // const updateAssistants = async (assistants: Assistant[]) => {
-  //   await upsertAssistants(assistants)
-  // }
-
-  // if (!updatedAt) {
-  //   return {
-  //     assistants: [],
-  //     isLoading: true,
-  //     updateAssistants
-  //   }
-  // }
-
-  // const processedAssistants = rawAssistants.map(provider => transformDbToAssistant(provider))
-
-  // return {
-  //   assistants: processedAssistants,
-  //   isLoading: false,
-  //   updateAssistants
-  // }
 }

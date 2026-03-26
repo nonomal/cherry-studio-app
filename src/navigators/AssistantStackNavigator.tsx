@@ -1,29 +1,32 @@
-import { createStackNavigator, TransitionPresets } from '@react-navigation/stack'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
 
 import AssistantDetailScreen from '@/screens/assistant/AssistantDetailScreen'
-import AssistantMarketScreen from '@/screens/assistant/AssistantMarketScreen'
 import AssistantScreen from '@/screens/assistant/AssistantScreen'
+import type { AssistantDetailScreenParams } from '@/types/naviagate'
 
 export type AssistantStackParamList = {
   AssistantScreen: undefined
-  AssistantMarketScreen: undefined
-  AssistantDetailScreen: { assistantId: string; tab?: string }
+  AssistantDetailScreen: AssistantDetailScreenParams
 }
 
-const Stack = createStackNavigator<AssistantStackParamList>()
+const Stack = createNativeStackNavigator<AssistantStackParamList>()
 
 export default function AssistantStackNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        gestureResponseDistance: 9999,
-        ...TransitionPresets.SlideFromRightIOS
+        animation: 'ios_from_right',
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true
       }}>
       <Stack.Screen name="AssistantScreen" component={AssistantScreen} />
-      <Stack.Screen name="AssistantMarketScreen" component={AssistantMarketScreen} />
-      <Stack.Screen name="AssistantDetailScreen" component={AssistantDetailScreen} />
+      <Stack.Screen
+        name="AssistantDetailScreen"
+        component={AssistantDetailScreen}
+        options={{ gestureEnabled: false, fullScreenGestureEnabled: false }}
+      />
     </Stack.Navigator>
   )
 }

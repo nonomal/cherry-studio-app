@@ -1,49 +1,66 @@
-import { DrawerNavigationProp } from '@react-navigation/drawer'
+import type { DrawerNavigationProp } from '@react-navigation/drawer'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { ImpactFeedbackStyle } from 'expo-haptics'
-import * as React from 'react'
+import type { StackNavigationProp } from '@react-navigation/stack'
+import React from 'react'
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller'
-import { YStack, SafeAreaContainer } from '@/componentsV2'
-import { MessageInputContainer } from '@/componentsV2/features/ChatScreen/MessageInput/MessageInputContainer'
+import { KeyboardAvoidingView, KeyboardController } from 'react-native-keyboard-controller'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { SafeAreaContainer, YStack } from '@/componentsV2'
+import { ChatScreenHeader } from '@/componentsV2/features/ChatScreen/Header'
+import { MessageInputContainer } from '@/componentsV2/features/ChatScreen/MessageInput/MessageInputContainer'
+import { CitationSheet } from '@/componentsV2/features/Sheet/CitationSheet'
 import { useAssistant } from '@/hooks/useAssistant'
 import { useBottom } from '@/hooks/useBottom'
-import { useTopic } from '@/hooks/useTopic'
-import { useAppSelector } from '@/store'
-import { haptic } from '@/utils/haptic'
+import { usePreference } from '@/hooks/usePreference'
+import { useCurrentTopic } from '@/hooks/useTopic'
+import type { HomeStackParamList } from '@/navigators/HomeStackNavigator'
 
 import ChatContent from './ChatContent'
-import { ChatScreenHeader } from '@/componentsV2/features/ChatScreen/Header'
+
+KeyboardController.preload()
+
+type ChatScreenNavigationProp = DrawerNavigationProp<any> & StackNavigationProp<HomeStackParamList>
 
 const ChatScreen = () => {
-  const navigation = useNavigation<DrawerNavigationProp<any>>()
-  const topicId = useAppSelector(state => state.topic.currentTopicId)
+  const insets = useSafeAreaInsets()
+  const navigation = useNavigation<ChatScreenNavigationProp>()
+  const [topicId] = usePreference('topic.current_id')
+  const { currentTopic } = useCurrentTopic()
 
-  const { topic, isLoading } = useTopic(topicId ?? '')
-  const { assistant, isLoading: assistantLoading } = useAssistant(topic?.assistantId || '')
+  const { assistant, isLoading: assistantLoading } = useAssistant(currentTopic?.assistantId || '')
   const specificBottom = useBottom()
 
   // 处理侧滑手势
   const handleSwipeGesture = (event: any) => {
     const { translationX, velocityX, state } = event.nativeEvent
 
-    // 检测向右滑动
     if (state === State.END) {
-      // 全屏可侧滑触发：滑动距离大于20且速度大于100，或者滑动距离大于80
-      const hasGoodDistance = translationX > 20
-      const hasGoodVelocity = velocityX > 100
-      const hasExcellentDistance = translationX > 80
+      // 右滑 → 打开抽屉
+      if (translationX > 0) {
+        const hasGoodDistance = translationX > 20
+        const hasGoodVelocity = velocityX > 100
+        const hasExcellentDistance = translationX > 80
 
-      if ((hasGoodDistance && hasGoodVelocity) || hasExcellentDistance) {
-        haptic(ImpactFeedbackStyle.Medium)
-        navigation.dispatch(DrawerActions.openDrawer())
+        if ((hasGoodDistance && hasGoodVelocity) || hasExcellentDistance) {
+          navigation.dispatch(DrawerActions.openDrawer())
+        }
+      }
+      // 左滑 → 跳转到 TopicScreen
+      else if (translationX < 0) {
+        const hasGoodDistance = Math.abs(translationX) > 20
+        const hasGoodVelocity = Math.abs(velocityX) > 100
+        const hasExcellentDistance = Math.abs(translationX) > 80
+
+        if ((hasGoodDistance && hasGoodVelocity) || hasExcellentDistance) {
+          navigation.navigate('TopicScreen', { assistantId: assistant?.id })
+        }
       }
     }
   }
 
-  if (!topic || isLoading || !assistant || assistantLoading) {
+  if (!currentTopic || !assistant || assistantLoading) {
     return (
       <SafeAreaContainer style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator />
@@ -52,7 +69,13 @@ const ChatScreen = () => {
   }
 
   return (
-    <SafeAreaContainer style={{ paddingBottom: 0 }}>
+    <SafeAreaContainer
+      style={{
+        paddingTop: insets.top,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+        paddingBottom: 0
+      }}>
       <PanGestureHandler
         onGestureEvent={handleSwipeGesture}
         onHandlerStateChange={handleSwipeGesture}
@@ -61,9 +84,9 @@ const ChatScreen = () => {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? -20 : -specificBottom}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          behavior="padding">
           <YStack className="flex-1">
-            <ChatScreenHeader topic={topic} />
+            <ChatScreenHeader topic={currentTopic} />
 
             <View
               style={{
@@ -71,12 +94,13 @@ const ChatScreen = () => {
               }}>
               {/* ChatContent use key to re-render screen content */}
               {/* if remove key, change topic will not re-render */}
-              <ChatContent key={topicId} topic={topic} assistant={assistant} />
+              <ChatContent key={topicId} topic={currentTopic} assistant={assistant} />
             </View>
-            <MessageInputContainer topic={topic} />
+            <MessageInputContainer topic={currentTopic} />
           </YStack>
         </KeyboardAvoidingView>
       </PanGestureHandler>
+      <CitationSheet />
     </SafeAreaContainer>
   )
 }
